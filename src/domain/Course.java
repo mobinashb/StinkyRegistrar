@@ -60,17 +60,20 @@ public class Course {
 		return id.equals(other.id);
 	}
 
-    public String getViolatingPrerequisite(Map<Term, Map<Course, Double>> transcript) {
-        nextPre:
+    public String getViolatingPrerequisite(Map<Term, List<TranscriptRecord>> transcript) {
         for (Course pre : getPrerequisites()) {
-            for (Map.Entry<Term, Map<Course, Double>> tr : transcript.entrySet()) {
-                for (Map.Entry<Course, Double> r : tr.getValue().entrySet()) {
-                    if (r.getKey().equals(pre) && r.getValue() >= 10)
-                        continue nextPre;
-                }
-            }
-            return pre.getName();
+			if (!checkPassedCourse(transcript, pre)) return pre.getName();
         }
         return "";
     }
+
+	private boolean checkPassedCourse(Map<Term, List<TranscriptRecord>> transcript, Course course) {
+		for (Map.Entry<Term, List<TranscriptRecord>> tr : transcript.entrySet()) {
+			for (TranscriptRecord r : tr.getValue()) {
+				if (r.getCourse().equals(course) && r.getGrade() >= 10)
+					return true;
+			}
+		}
+		return false;
+	}
 }

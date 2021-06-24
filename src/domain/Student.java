@@ -8,7 +8,7 @@ public class Student {
 	private String id;
 	private String name;
 
-	private Map<Term, Map<Course, Double>> transcript;
+	private Map<Term, List<TranscriptRecord>> transcript;
 	private List<EnrollOffering> currentTerm;
 
 	public Student(String id, String name) {
@@ -22,14 +22,14 @@ public class Student {
 		currentTerm.add(new EnrollOffering(c, section));
 	}
 
-	public Map<Term, Map<Course, Double>> getTranscript() {
+	public Map<Term, List<TranscriptRecord>> getTranscript() {
 		return transcript;
 	}
 
 	public void addTranscriptRecord(Course course, Term term, double grade) {
 	    if (!transcript.containsKey(term))
-	        transcript.put(term, new HashMap<>());
-	    transcript.get(term).put(course, grade);
+	        transcript.put(term, new ArrayList<>());
+	    transcript.get(term).add(new TranscriptRecord(course, grade));
     }
 
     public List<EnrollOffering> getCurrentTerm() {

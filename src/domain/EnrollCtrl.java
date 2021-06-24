@@ -7,7 +7,7 @@ import domain.exceptions.EnrollmentRulesViolationException;
 
 public class EnrollCtrl {
 	public void enroll(Student s, List<EnrollOffering> courses) throws EnrollmentRulesViolationException {
-        Map<Term, Map<Course, Double>> transcript = s.getTranscript();
+        Map<Term, List<TranscriptRecord>> transcript = s.getTranscript();
         checkAlreadyPassedCourse(courses, transcript);
         checkPassedPrerequisites(courses, transcript);
         checkConflictingExamTimes(courses);
@@ -17,16 +17,16 @@ public class EnrollCtrl {
 			s.takeCourse(o.getCourse(), o.getSection());
 	}
 
-    private void checkGPALimit(List<EnrollOffering> courses, Map<Term, Map<Course, Double>> transcript) throws EnrollmentRulesViolationException {
+    private void checkGPALimit(List<EnrollOffering> courses, Map<Term, List<TranscriptRecord>> transcript) throws EnrollmentRulesViolationException {
         int unitsRequested = 0;
         for (EnrollOffering o : courses)
             unitsRequested += o.getCourse().getUnits();
         double points = 0;
         int totalUnits = 0;
-        for (Map.Entry<Term, Map<Course, Double>> tr : transcript.entrySet()) {
-            for (Map.Entry<Course, Double> r : tr.getValue().entrySet()) {
-                points += r.getValue() * r.getKey().getUnits();
-                totalUnits += r.getKey().getUnits();
+        for (Map.Entry<Term, List<TranscriptRecord>> tr : transcript.entrySet()) {
+            for (TranscriptRecord r : tr.getValue()) {
+                points += r.getGrade() * r.getCourse().getUnits();
+                totalUnits += r.getCourse().getUnits();
             }
 		}
         double gpa = points / totalUnits;
@@ -58,7 +58,7 @@ public class EnrollCtrl {
         }
     }
 
-    private void checkPassedPrerequisites(List<EnrollOffering> courses, Map<Term, Map<Course, Double>> transcript) throws EnrollmentRulesViolationException {
+    private void checkPassedPrerequisites(List<EnrollOffering> courses, Map<Term, List<TranscriptRecord>> transcript) throws EnrollmentRulesViolationException {
 	    for (EnrollOffering o : courses) {
             String violatingPre = o.getCourse().getViolatingPrerequisite(transcript);
             if (!violatingPre.equals(""))
@@ -66,11 +66,11 @@ public class EnrollCtrl {
         }
     }
 
-    private void checkAlreadyPassedCourse(List<EnrollOffering> courses, Map<Term, Map<Course, Double>> transcript) throws EnrollmentRulesViolationException {
+    private void checkAlreadyPassedCourse(List<EnrollOffering> courses, Map<Term, List<TranscriptRecord>> transcript) throws EnrollmentRulesViolationException {
         for (EnrollOffering o : courses) {
-            for (Map.Entry<Term, Map<Course, Double>> tr : transcript.entrySet()) {
-                for (Map.Entry<Course, Double> r : tr.getValue().entrySet()) {
-                    if (r.getKey().equals(o.getCourse()) && r.getValue() >= 10)
+            for (Map.Entry<Term, List<TranscriptRecord>> tr : transcript.entrySet()) {
+                for (TranscriptRecord r : tr.getValue()) {
+                    if (r.getCourse().equals(o.getCourse()) && r.getGrade() >= 10)
                         throw new EnrollmentRulesViolationException(String.format("The student has already passed %s", o.getCourse().getName()));
                 }
             }
