@@ -62,17 +62,17 @@ public class Student {
 		double points = 0;
 		int totalUnits = 0;
 
-		for (Map.Entry<Term, List<TranscriptRecord>> tr : this.transcript.entrySet()) {
-			points += tr.getValue().stream().mapToDouble(r -> r.getGrade() * r.getCourse().getUnits()).sum();
-			totalUnits += tr.getValue().stream().mapToInt(r -> r.getCourse().getUnits()).sum();
+		for (Map.Entry<Term, List<TranscriptRecord>> transcriptRecord : this.transcript.entrySet()) {
+			points += transcriptRecord.getValue().stream().mapToDouble(r -> r.getGrade() * r.getCourse().getUnits()).sum();
+			totalUnits += transcriptRecord.getValue().stream().mapToInt(r -> r.getCourse().getUnits()).sum();
 		}
 		return points / totalUnits;
 	}
 
 	public boolean hasPassed(Course course) {
-		for (Map.Entry<Term, List<TranscriptRecord>> tr : this.transcript.entrySet()) {
-			for (TranscriptRecord r : tr.getValue()) {
-				if (r.getCourse().equals(course) && r.getGrade() >= 10)
+		for (Map.Entry<Term, List<TranscriptRecord>> transcriptRecord : this.transcript.entrySet()) {
+			for (TranscriptRecord record : transcriptRecord.getValue()) {
+				if (record.getCourse().equals(course) && record.getGrade() >= 10)
 					return true;
 			}
 		}

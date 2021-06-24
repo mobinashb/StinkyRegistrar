@@ -1,13 +1,11 @@
 package domain;
 
 import java.util.List;
-import java.util.Map;
 
 import domain.exceptions.EnrollmentRulesViolationException;
 
 public class EnrollCtrl {
 	public void enroll(Student s, List<EnrollOffering> enrollOfferings) throws EnrollmentRulesViolationException {
-        Map<Term, List<TranscriptRecord>> transcript = s.getTranscript();
         checkAlreadyPassedCourse(enrollOfferings, s);
         checkPassedPrerequisites(enrollOfferings, s);
         checkConflictingExamTimes(enrollOfferings);
@@ -24,39 +22,39 @@ public class EnrollCtrl {
     }
 
     private void checkTakenTwiceCourse(List<EnrollOffering> enrollOfferings) throws EnrollmentRulesViolationException {
-        for (EnrollOffering o : enrollOfferings) {
-            for (EnrollOffering o2 : enrollOfferings) {
-                if (o == o2)
+        for (EnrollOffering offering : enrollOfferings) {
+            for (EnrollOffering offering2 : enrollOfferings) {
+                if (offering == offering2)
                     continue;
-                if (o.getCourse().equals(o2.getCourse()))
-                    throw new EnrollmentRulesViolationException(String.format("%s is requested to be taken twice", o.getCourse().getName()));
+                if (offering.getCourse().equals(offering2.getCourse()))
+                    throw new EnrollmentRulesViolationException(String.format("%s is requested to be taken twice", offering.getCourse().getName()));
             }
 		}
     }
 
     private void checkConflictingExamTimes(List<EnrollOffering> enrollOfferings) throws EnrollmentRulesViolationException {
-        for (EnrollOffering o : enrollOfferings) {
-            for (EnrollOffering o2 : enrollOfferings) {
-                if (o == o2)
+        for (EnrollOffering offering : enrollOfferings) {
+            for (EnrollOffering offering2 : enrollOfferings) {
+                if (offering == offering2)
                     continue;
-                if (o.getExamTime().equals(o2.getExamTime()))
-                    throw new EnrollmentRulesViolationException(String.format("Two offerings %s and %s have the same exam time", o, o2));
+                if (offering.getExamTime().equals(offering2.getExamTime()))
+                    throw new EnrollmentRulesViolationException(String.format("Two offerings %s and %s have the same exam time", offering, offering2));
             }
         }
     }
 
     private void checkPassedPrerequisites(List<EnrollOffering> enrollOfferings, Student s) throws EnrollmentRulesViolationException {
-	    for (EnrollOffering o : enrollOfferings) {
-            String violatingPre = o.getCourse().getViolatingPrerequisite(s);
+	    for (EnrollOffering offering : enrollOfferings) {
+            String violatingPre = offering.getCourse().getViolatingPrerequisite(s);
             if (!violatingPre.equals(""))
-                throw new EnrollmentRulesViolationException(String.format("The student has not passed %s as a prerequisite of %s", violatingPre, o.getCourse().getName()));
+                throw new EnrollmentRulesViolationException(String.format("The student has not passed %s as a prerequisite of %s", violatingPre, offering.getCourse().getName()));
         }
     }
 
     private void checkAlreadyPassedCourse(List<EnrollOffering> enrollOfferings, Student s) throws EnrollmentRulesViolationException {
-        for (EnrollOffering o : enrollOfferings) {
-            if (s.hasPassed(o.getCourse()))
-                        throw new EnrollmentRulesViolationException(String.format("The student has already passed %s", o.getCourse().getName()));
+        for (EnrollOffering offering : enrollOfferings) {
+            if (s.hasPassed(offering.getCourse()))
+                        throw new EnrollmentRulesViolationException(String.format("The student has already passed %s", offering.getCourse().getName()));
         }
     }
 }
