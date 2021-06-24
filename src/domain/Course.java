@@ -61,9 +61,8 @@ public class Course {
 	}
 
     public String getViolatingPrerequisite(Map<Term, Map<Course, Double>> transcript) {
-        List<Course> prereqs = getPrerequisites();
         nextPre:
-        for (Course pre : prereqs) {
+        for (Course pre : getPrerequisites()) {
             for (Map.Entry<Term, Map<Course, Double>> tr : transcript.entrySet()) {
                 for (Map.Entry<Course, Double> r : tr.getValue().entrySet()) {
                     if (r.getKey().equals(pre) && r.getValue() >= 10)
