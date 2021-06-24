@@ -23,7 +23,13 @@ public class EnrollOffering {
 		this.section = section;
 		this.examDate = examDate;
 	}
-	
+
+	public EnrollOffering(Course course, int section) {
+		this.course = course;
+		this.section = section;
+		this.examDate = null;
+	}
+
 	public Course getCourse() {
 		return course;
 	}
