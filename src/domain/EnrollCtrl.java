@@ -6,29 +6,26 @@ import java.util.Map;
 import domain.exceptions.EnrollmentRulesViolationException;
 
 public class EnrollCtrl {
-	public void enroll(Student s, List<EnrollOffering> courses) throws EnrollmentRulesViolationException {
+	public void enroll(Student s, List<EnrollOffering> enrollOfferings) throws EnrollmentRulesViolationException {
         Map<Term, List<TranscriptRecord>> transcript = s.getTranscript();
-        checkAlreadyPassedCourse(courses, transcript);
-        checkPassedPrerequisites(courses, transcript);
-        checkConflictingExamTimes(courses);
-        checkTakenTwiceCourse(courses);
-        checkGPALimit(s, courses);
-        for (EnrollOffering o : courses)
-			s.takeCourse(o.getCourse(), o.getSection());
+        checkAlreadyPassedCourse(enrollOfferings, transcript);
+        checkPassedPrerequisites(enrollOfferings, transcript);
+        checkConflictingExamTimes(enrollOfferings);
+        checkTakenTwiceCourse(enrollOfferings);
+        checkGPALimit(s, enrollOfferings);
+        enrollOfferings.forEach(o -> s.takeCourse(o.getCourse(), o.getSection()));
 	}
 
     private void checkGPALimit(Student s, List<EnrollOffering> enrollOfferings) throws EnrollmentRulesViolationException {
-        int unitsRequested = 0;
-        for (EnrollOffering o : enrollOfferings)
-            unitsRequested += o.getCourse().getUnits();
+        int unitsRequested = enrollOfferings.stream().mapToInt(o -> o.getCourse().getUnits()).sum();
         if (!s.checkGPALimit(unitsRequested)) {
             throw new EnrollmentRulesViolationException(String.format("Number of units (%d) requested does not match GPA of %f", unitsRequested, s.getGpa()));
         }
     }
 
-    private void checkTakenTwiceCourse(List<EnrollOffering> courses) throws EnrollmentRulesViolationException {
-        for (EnrollOffering o : courses) {
-            for (EnrollOffering o2 : courses) {
+    private void checkTakenTwiceCourse(List<EnrollOffering> enrollOfferings) throws EnrollmentRulesViolationException {
+        for (EnrollOffering o : enrollOfferings) {
+            for (EnrollOffering o2 : enrollOfferings) {
                 if (o == o2)
                     continue;
                 if (o.getCourse().equals(o2.getCourse()))
@@ -37,9 +34,9 @@ public class EnrollCtrl {
 		}
     }
 
-    private void checkConflictingExamTimes(List<EnrollOffering> courses) throws EnrollmentRulesViolationException {
-        for (EnrollOffering o : courses) {
-            for (EnrollOffering o2 : courses) {
+    private void checkConflictingExamTimes(List<EnrollOffering> enrollOfferings) throws EnrollmentRulesViolationException {
+        for (EnrollOffering o : enrollOfferings) {
+            for (EnrollOffering o2 : enrollOfferings) {
                 if (o == o2)
                     continue;
                 if (o.getExamTime().equals(o2.getExamTime()))
@@ -48,16 +45,16 @@ public class EnrollCtrl {
         }
     }
 
-    private void checkPassedPrerequisites(List<EnrollOffering> courses, Map<Term, List<TranscriptRecord>> transcript) throws EnrollmentRulesViolationException {
-	    for (EnrollOffering o : courses) {
+    private void checkPassedPrerequisites(List<EnrollOffering> enrollOfferings, Map<Term, List<TranscriptRecord>> transcript) throws EnrollmentRulesViolationException {
+	    for (EnrollOffering o : enrollOfferings) {
             String violatingPre = o.getCourse().getViolatingPrerequisite(transcript);
             if (!violatingPre.equals(""))
                 throw new EnrollmentRulesViolationException(String.format("The student has not passed %s as a prerequisite of %s", violatingPre, o.getCourse().getName()));
         }
     }
 
-    private void checkAlreadyPassedCourse(List<EnrollOffering> courses, Map<Term, List<TranscriptRecord>> transcript) throws EnrollmentRulesViolationException {
-        for (EnrollOffering o : courses) {
+    private void checkAlreadyPassedCourse(List<EnrollOffering> enrollOfferings, Map<Term, List<TranscriptRecord>> transcript) throws EnrollmentRulesViolationException {
+        for (EnrollOffering o : enrollOfferings) {
             for (Map.Entry<Term, List<TranscriptRecord>> tr : transcript.entrySet()) {
                 for (TranscriptRecord r : tr.getValue()) {
                     if (r.getCourse().equals(o.getCourse()) && r.getGrade() >= 10)

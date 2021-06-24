@@ -61,11 +61,10 @@ public class Student {
 	public double getGpa() {
 		double points = 0;
 		int totalUnits = 0;
+
 		for (Map.Entry<Term, List<TranscriptRecord>> tr : this.transcript.entrySet()) {
-			for (TranscriptRecord r : tr.getValue()) {
-				points += r.getGrade() * r.getCourse().getUnits();
-				totalUnits += r.getCourse().getUnits();
-			}
+			points += tr.getValue().stream().mapToDouble(r -> r.getGrade() * r.getCourse().getUnits()).sum();
+			totalUnits += tr.getValue().stream().mapToInt(r -> r.getCourse().getUnits()).sum();
 		}
 		return points / totalUnits;
 	}
