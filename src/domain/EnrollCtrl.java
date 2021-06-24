@@ -12,28 +12,18 @@ public class EnrollCtrl {
         checkPassedPrerequisites(courses, transcript);
         checkConflictingExamTimes(courses);
         checkTakenTwiceCourse(courses);
-        checkGPALimit(courses, transcript);
+        checkGPALimit(s, courses);
         for (EnrollOffering o : courses)
 			s.takeCourse(o.getCourse(), o.getSection());
 	}
 
-    private void checkGPALimit(List<EnrollOffering> courses, Map<Term, List<TranscriptRecord>> transcript) throws EnrollmentRulesViolationException {
+    private void checkGPALimit(Student s, List<EnrollOffering> enrollOfferings) throws EnrollmentRulesViolationException {
         int unitsRequested = 0;
-        for (EnrollOffering o : courses)
+        for (EnrollOffering o : enrollOfferings)
             unitsRequested += o.getCourse().getUnits();
-        double points = 0;
-        int totalUnits = 0;
-        for (Map.Entry<Term, List<TranscriptRecord>> tr : transcript.entrySet()) {
-            for (TranscriptRecord r : tr.getValue()) {
-                points += r.getGrade() * r.getCourse().getUnits();
-                totalUnits += r.getCourse().getUnits();
-            }
-		}
-        double gpa = points / totalUnits;
-        if ((gpa < 12 && unitsRequested > 14) ||
-                (gpa < 16 && unitsRequested > 16) ||
-                (unitsRequested > 20))
-            throw new EnrollmentRulesViolationException(String.format("Number of units (%d) requested does not match GPA of %f", unitsRequested, gpa));
+        if (!s.checkGPALimit(unitsRequested)) {
+            throw new EnrollmentRulesViolationException(String.format("Number of units (%d) requested does not match GPA of %f", unitsRequested, s.getGpa()));
+        }
     }
 
     private void checkTakenTwiceCourse(List<EnrollOffering> courses) throws EnrollmentRulesViolationException {

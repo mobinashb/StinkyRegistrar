@@ -1,4 +1,6 @@
 package domain;
+import domain.exceptions.EnrollmentRulesViolationException;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -46,5 +48,25 @@ public class Student {
 	
 	public String toString() {
 		return name;
+	}
+
+	public boolean checkGPALimit(int unitsRequested) {
+		if ((getGpa() < 12 && unitsRequested > 14) ||
+				(getGpa() < 16 && unitsRequested > 16) ||
+				(unitsRequested > 20))
+			return false;
+		return true;
+	}
+
+	public double getGpa() {
+		double points = 0;
+		int totalUnits = 0;
+		for (Map.Entry<Term, List<TranscriptRecord>> tr : this.transcript.entrySet()) {
+			for (TranscriptRecord r : tr.getValue()) {
+				points += r.getGrade() * r.getCourse().getUnits();
+				totalUnits += r.getCourse().getUnits();
+			}
+		}
+		return points / totalUnits;
 	}
 }
