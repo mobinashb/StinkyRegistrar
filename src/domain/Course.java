@@ -2,6 +2,7 @@ package domain;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 public class Course {
 	private String id;
@@ -58,4 +59,19 @@ public class Course {
 		Course other = (Course)obj;
 		return id.equals(other.id);
 	}
+
+    public String getViolatingPrerequisite(Map<Term, Map<Course, Double>> transcript) {
+        List<Course> prereqs = getPrerequisites();
+        nextPre:
+        for (Course pre : prereqs) {
+            for (Map.Entry<Term, Map<Course, Double>> tr : transcript.entrySet()) {
+                for (Map.Entry<Course, Double> r : tr.getValue().entrySet()) {
+                    if (r.getKey().equals(pre) && r.getValue() >= 10)
+                        continue nextPre;
+                }
+            }
+            return pre.getName();
+        }
+        return "";
+    }
 }

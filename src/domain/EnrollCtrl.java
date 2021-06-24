@@ -59,18 +59,10 @@ public class EnrollCtrl {
     }
 
     private void checkPassedPrerequisites(List<EnrollOffering> courses, Map<Term, Map<Course, Double>> transcript) throws EnrollmentRulesViolationException {
-        for (EnrollOffering o : courses) {
-			List<Course> prereqs = o.getCourse().getPrerequisites();
-			nextPre:
-			for (Course pre : prereqs) {
-                for (Map.Entry<Term, Map<Course, Double>> tr : transcript.entrySet()) {
-                    for (Map.Entry<Course, Double> r : tr.getValue().entrySet()) {
-                        if (r.getKey().equals(pre) && r.getValue() >= 10)
-                            continue nextPre;
-                    }
-				}
-				throw new EnrollmentRulesViolationException(String.format("The student has not passed %s as a prerequisite of %s", pre.getName(), o.getCourse().getName()));
-			}
+	    for (EnrollOffering o : courses) {
+            String violatingPre = o.getCourse().getViolatingPrerequisite(transcript);
+            if (!violatingPre.equals(""))
+                throw new EnrollmentRulesViolationException(String.format("The student has not passed %s as a prerequisite of %s", violatingPre, o.getCourse().getName()));
         }
     }
 
@@ -79,7 +71,7 @@ public class EnrollCtrl {
             for (Map.Entry<Term, Map<Course, Double>> tr : transcript.entrySet()) {
                 for (Map.Entry<Course, Double> r : tr.getValue().entrySet()) {
                     if (r.getKey().equals(o.getCourse()) && r.getValue() >= 10)
-                    throw new EnrollmentRulesViolationException(String.format("The student has already passed %s", o.getCourse().getName()));
+                        throw new EnrollmentRulesViolationException(String.format("The student has already passed %s", o.getCourse().getName()));
                 }
             }
         }
