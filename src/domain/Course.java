@@ -60,20 +60,10 @@ public class Course {
 		return id.equals(other.id);
 	}
 
-    public String getViolatingPrerequisite(Map<Term, List<TranscriptRecord>> transcript) {
+    public String getViolatingPrerequisite(Student s) {
         for (Course pre : getPrerequisites()) {
-			if (!checkPassedCourse(transcript, pre)) return pre.getName();
+			if (!s.hasPassed(pre)) return pre.getName();
         }
         return "";
     }
-
-	private boolean checkPassedCourse(Map<Term, List<TranscriptRecord>> transcript, Course course) {
-		for (Map.Entry<Term, List<TranscriptRecord>> tr : transcript.entrySet()) {
-			for (TranscriptRecord r : tr.getValue()) {
-				if (r.getCourse().equals(course) && r.getGrade() >= 10)
-					return true;
-			}
-		}
-		return false;
-	}
 }

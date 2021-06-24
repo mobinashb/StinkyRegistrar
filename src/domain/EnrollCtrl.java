@@ -8,8 +8,8 @@ import domain.exceptions.EnrollmentRulesViolationException;
 public class EnrollCtrl {
 	public void enroll(Student s, List<EnrollOffering> enrollOfferings) throws EnrollmentRulesViolationException {
         Map<Term, List<TranscriptRecord>> transcript = s.getTranscript();
-        checkAlreadyPassedCourse(enrollOfferings, transcript);
-        checkPassedPrerequisites(enrollOfferings, transcript);
+        checkAlreadyPassedCourse(enrollOfferings, s);
+        checkPassedPrerequisites(enrollOfferings, s);
         checkConflictingExamTimes(enrollOfferings);
         checkTakenTwiceCourse(enrollOfferings);
         checkGPALimit(s, enrollOfferings);
@@ -45,22 +45,18 @@ public class EnrollCtrl {
         }
     }
 
-    private void checkPassedPrerequisites(List<EnrollOffering> enrollOfferings, Map<Term, List<TranscriptRecord>> transcript) throws EnrollmentRulesViolationException {
+    private void checkPassedPrerequisites(List<EnrollOffering> enrollOfferings, Student s) throws EnrollmentRulesViolationException {
 	    for (EnrollOffering o : enrollOfferings) {
-            String violatingPre = o.getCourse().getViolatingPrerequisite(transcript);
+            String violatingPre = o.getCourse().getViolatingPrerequisite(s);
             if (!violatingPre.equals(""))
                 throw new EnrollmentRulesViolationException(String.format("The student has not passed %s as a prerequisite of %s", violatingPre, o.getCourse().getName()));
         }
     }
 
-    private void checkAlreadyPassedCourse(List<EnrollOffering> enrollOfferings, Map<Term, List<TranscriptRecord>> transcript) throws EnrollmentRulesViolationException {
+    private void checkAlreadyPassedCourse(List<EnrollOffering> enrollOfferings, Student s) throws EnrollmentRulesViolationException {
         for (EnrollOffering o : enrollOfferings) {
-            for (Map.Entry<Term, List<TranscriptRecord>> tr : transcript.entrySet()) {
-                for (TranscriptRecord r : tr.getValue()) {
-                    if (r.getCourse().equals(o.getCourse()) && r.getGrade() >= 10)
+            if (s.hasPassed(o.getCourse()))
                         throw new EnrollmentRulesViolationException(String.format("The student has already passed %s", o.getCourse().getName()));
-                }
-            }
         }
     }
 }

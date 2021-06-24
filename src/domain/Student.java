@@ -68,4 +68,14 @@ public class Student {
 		}
 		return points / totalUnits;
 	}
+
+	public boolean hasPassed(Course course) {
+		for (Map.Entry<Term, List<TranscriptRecord>> tr : this.transcript.entrySet()) {
+			for (TranscriptRecord r : tr.getValue()) {
+				if (r.getCourse().equals(course) && r.getGrade() >= 10)
+					return true;
+			}
+		}
+		return false;
+	}
 }
