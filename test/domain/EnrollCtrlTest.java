@@ -64,33 +64,75 @@ public class EnrollCtrlTest {
 		return true;
 	}
 
+	private boolean hasGPALimitError(List<String> errors){
+		for(String err: errors)
+			if (err.startsWith(ErrorsTag.GPA_LIMIT_ERROR)) return true;
+		return false;
+	}
+	private boolean hasTakenTwiceError(List<String> errors){
+		for(String err: errors)
+			if (err.startsWith(ErrorsTag.TAKEN_TWICE_ERROR)) return true;
+		return false;
+	}
+	private boolean hasExamTimesError(List<String> errors){
+		for(String err: errors)
+			if (err.startsWith(ErrorsTag.EXAM_TIMES_ERROR)) return true;
+		return false;
+	}
+	private boolean passedPrerequisitesError(List<String> errors){
+		for(String err: errors)
+			if (err.startsWith(ErrorsTag.PASSED_PREREQUISITES_ERROR)) return true;
+		return false;
+	}
+	private boolean alreadyPassedError(List<String> errors){
+		for(String err: errors)
+			if (err.startsWith(ErrorsTag.ALREADY_PASSED_ERROR)) return true;
+		return false;
+	}
+
 	@Test
-	public void canTakeBasicCoursesInFirstTerm() throws EnrollmentRulesViolationException {
+	public void canTakeBasicCoursesInFirstTerm(){
 		new EnrollCtrl().enroll(bebe, requestedOfferings(math1, phys1, prog));
 		assertTrue(hasTaken(bebe, math1, phys1, prog));
 	}
 
 	@Test
-	public void canTakeNoOfferings() throws EnrollmentRulesViolationException {
+	public void canTakeNoOfferings() {
 		new EnrollCtrl().enroll(bebe, new ArrayList<>());
 		assertTrue(hasTaken(bebe));
 	}
 
-	@Test(expected = EnrollmentRulesViolationException.class)
-	public void cannotTakeWithoutPreTaken() throws EnrollmentRulesViolationException {
-		new EnrollCtrl().enroll(bebe, requestedOfferings(math2, phys1, prog));
-	}
+	@Test
+	public void cannotTakeWithoutPreTaken() {
+		EnrollCtrl enrollCtrl = new EnrollCtrl();
+		enrollCtrl.enroll(bebe, requestedOfferings(math2, phys1, prog));
 
-	@Test(expected = EnrollmentRulesViolationException.class)
-	public void cannotTakeWithoutPrePassed() throws EnrollmentRulesViolationException {
-		bebe.addTranscriptRecord(phys1, new Term("t1"), 18);
-		bebe.addTranscriptRecord(prog, new Term("t1"), 12);
-		bebe.addTranscriptRecord(math1, new Term("t1"), 8.4);
-		new EnrollCtrl().enroll(bebe, requestedOfferings(math2, ap));
+		assertTrue(passedPrerequisitesError(enrollCtrl.getErrors()));
+
+		assertFalse(hasGPALimitError(enrollCtrl.getErrors()));
+		assertFalse(hasTakenTwiceError(enrollCtrl.getErrors()));
+		assertFalse(alreadyPassedError(enrollCtrl.getErrors()));
+		assertFalse(hasExamTimesError(enrollCtrl.getErrors()));
 	}
 
 	@Test
-	public void canTakeWithPreFinallyPassed() throws EnrollmentRulesViolationException {
+	public void cannotTakeWithoutPrePassed() {
+		bebe.addTranscriptRecord(phys1, new Term("t1"), 18);
+		bebe.addTranscriptRecord(prog, new Term("t1"), 12);
+		bebe.addTranscriptRecord(math1, new Term("t1"), 8.4);
+		EnrollCtrl enrollCtrl = new EnrollCtrl();
+		enrollCtrl.enroll(bebe, requestedOfferings(math2, ap));
+
+		assertTrue(passedPrerequisitesError(enrollCtrl.getErrors()));
+
+		assertFalse(hasGPALimitError(enrollCtrl.getErrors()));
+		assertFalse(hasTakenTwiceError(enrollCtrl.getErrors()));
+		assertFalse(alreadyPassedError(enrollCtrl.getErrors()));
+		assertFalse(hasExamTimesError(enrollCtrl.getErrors()));
+	}
+
+	@Test
+	public void canTakeWithPreFinallyPassed() {
 		bebe.addTranscriptRecord(phys1, new Term("t1"), 18);
 		bebe.addTranscriptRecord(prog, new Term("t1"), 12);
 		bebe.addTranscriptRecord(math1, new Term("t1"), 8.4);
@@ -103,8 +145,8 @@ public class EnrollCtrlTest {
 		assertTrue(hasTaken(bebe, math2, dm));
 	}
 
-	@Test(expected = EnrollmentRulesViolationException.class)
-	public void cannotTakeAlreadyPassed1() throws EnrollmentRulesViolationException {
+	@Test
+	public void cannotTakeAlreadyPassed1() {
 		bebe.addTranscriptRecord(phys1, new Term("t1"), 18);
 		bebe.addTranscriptRecord(prog, new Term("t1"), 12);
 		bebe.addTranscriptRecord(math1, new Term("t1"), 8.4);
@@ -113,11 +155,20 @@ public class EnrollCtrlTest {
 		bebe.addTranscriptRecord(ap, new Term("t2"), 16);
 		bebe.addTranscriptRecord(math1, new Term("t2"), 10.5);
 
-		new EnrollCtrl().enroll(bebe, requestedOfferings(math1, dm));
+		EnrollCtrl enrollCtrl = new EnrollCtrl();
+		enrollCtrl.enroll(bebe, requestedOfferings(math1, dm));
+
+		assertTrue(alreadyPassedError(enrollCtrl.getErrors()));
+
+
+		assertFalse(passedPrerequisitesError(enrollCtrl.getErrors()));
+		assertFalse(hasGPALimitError(enrollCtrl.getErrors()));
+		assertFalse(hasTakenTwiceError(enrollCtrl.getErrors()));
+		assertFalse(hasExamTimesError(enrollCtrl.getErrors()));
 	}
 
-	@Test(expected = EnrollmentRulesViolationException.class)
-	public void cannotTakeAlreadyPassed2() throws EnrollmentRulesViolationException {
+	@Test
+	public void cannotTakeAlreadyPassed2() {
 		bebe.addTranscriptRecord(phys1, new Term("t1"), 18);
 		bebe.addTranscriptRecord(prog, new Term("t1"), 12);
 		bebe.addTranscriptRecord(math1, new Term("t1"), 8.4);
@@ -126,27 +177,50 @@ public class EnrollCtrlTest {
 		bebe.addTranscriptRecord(ap, new Term("t2"), 16);
 		bebe.addTranscriptRecord(math1, new Term("t2"), 10.5);
 
-		new EnrollCtrl().enroll(bebe, requestedOfferings(phys1, dm));
+		EnrollCtrl enrollCtrl = new EnrollCtrl();
+		enrollCtrl.enroll(bebe, requestedOfferings(phys1, dm));
+
+		assertTrue(alreadyPassedError(enrollCtrl.getErrors()));
+
+		assertFalse(passedPrerequisitesError(enrollCtrl.getErrors()));
+		assertFalse(hasGPALimitError(enrollCtrl.getErrors()));
+		assertFalse(hasTakenTwiceError(enrollCtrl.getErrors()));
+		assertFalse(hasExamTimesError(enrollCtrl.getErrors()));
 	}
 
-	@Test(expected = EnrollmentRulesViolationException.class)
-	public void cannotTakeOfferingsWithSameExamTime() throws EnrollmentRulesViolationException {
+	@Test
+	public void cannotTakeOfferingsWithSameExamTime() {
 		Calendar cal = Calendar.getInstance();
-		new EnrollCtrl().enroll(bebe,
+		EnrollCtrl enrollCtrl = new EnrollCtrl();
+		enrollCtrl.enroll(bebe,
 				List.of(
 					new EnrollOffering(phys1, cal.getTime()),
 					new EnrollOffering(math1, cal.getTime()),
 					new EnrollOffering(phys1, cal.getTime())
 				));
-	}
+		assertTrue(hasExamTimesError(enrollCtrl.getErrors()));
+		assertTrue(hasTakenTwiceError(enrollCtrl.getErrors()));
 
-	@Test(expected = EnrollmentRulesViolationException.class)
-	public void cannotTakeACourseTwice() throws EnrollmentRulesViolationException {
-		new EnrollCtrl().enroll(bebe, requestedOfferings(phys1, dm, phys1));
+		assertFalse(alreadyPassedError(enrollCtrl.getErrors()));
+		assertFalse(passedPrerequisitesError(enrollCtrl.getErrors()));
+		assertFalse(hasGPALimitError(enrollCtrl.getErrors()));
 	}
 
 	@Test
-	public void canTake14WithGPA11() throws EnrollmentRulesViolationException {
+	public void cannotTakeACourseTwice() {
+		EnrollCtrl enrollCtrl = new EnrollCtrl();
+		enrollCtrl.enroll(bebe, requestedOfferings(phys1, dm, phys1));
+
+		assertTrue(hasTakenTwiceError(enrollCtrl.getErrors()));
+		assertTrue(passedPrerequisitesError(enrollCtrl.getErrors()));
+
+		assertFalse(hasExamTimesError(enrollCtrl.getErrors()));
+		assertFalse(alreadyPassedError(enrollCtrl.getErrors()));
+		assertFalse(hasGPALimitError(enrollCtrl.getErrors()));
+	}
+
+	@Test
+	public void canTake14WithGPA11() {
 		bebe.addTranscriptRecord(phys1, new Term("t1"), 13);
 		bebe.addTranscriptRecord(prog, new Term("t1"), 11);
 		bebe.addTranscriptRecord(math1, new Term("t1"), 9);
@@ -155,18 +229,27 @@ public class EnrollCtrlTest {
 		assertTrue(hasTaken(bebe, dm, math1, farsi, akhlagh, english, maaref));
 	}
 
-	@Test(expected = EnrollmentRulesViolationException.class)
-	public void cannotTake15WithGPA11() throws EnrollmentRulesViolationException {
+	@Test
+	public void cannotTake15WithGPA11() {
 		bebe.addTranscriptRecord(phys1, new Term("t1"), 13);
 		bebe.addTranscriptRecord(prog, new Term("t1"), 11);
 		bebe.addTranscriptRecord(math1, new Term("t1"), 9);
 
-		new EnrollCtrl().enroll(bebe, requestedOfferings(dm, math1, farsi, akhlagh, english, ap));
-		assertTrue(hasTaken(bebe, dm, math1, farsi, akhlagh, english, ap));
+		EnrollCtrl enrollCtrl = new EnrollCtrl();
+		enrollCtrl.enroll(bebe, requestedOfferings(dm, math1, farsi, akhlagh, english, ap));
+
+		assertFalse(hasTaken(bebe, dm, math1, farsi, akhlagh, english, ap));
+
+		assertTrue(hasGPALimitError(enrollCtrl.getErrors()));
+
+		assertFalse(hasTakenTwiceError(enrollCtrl.getErrors()));
+		assertFalse(passedPrerequisitesError(enrollCtrl.getErrors()));
+		assertFalse(hasExamTimesError(enrollCtrl.getErrors()));
+		assertFalse(alreadyPassedError(enrollCtrl.getErrors()));
 	}
 
 	@Test
-	public void canTake15WithGPA12() throws EnrollmentRulesViolationException {
+	public void canTake15WithGPA12() {
 		bebe.addTranscriptRecord(phys1, new Term("t1"), 15);
 		bebe.addTranscriptRecord(prog, new Term("t1"), 12);
 		bebe.addTranscriptRecord(math1, new Term("t1"), 9);
@@ -176,7 +259,7 @@ public class EnrollCtrlTest {
 	}
 
 	@Test
-	public void canTake15WithGPA15() throws EnrollmentRulesViolationException {
+	public void canTake15WithGPA15() {
 		bebe.addTranscriptRecord(phys1, new Term("t1"), 15);
 		bebe.addTranscriptRecord(prog, new Term("t1"), 15);
 		bebe.addTranscriptRecord(math1, new Term("t1"), 15);
@@ -185,18 +268,27 @@ public class EnrollCtrlTest {
 		assertTrue(hasTaken(bebe, dm, math2, farsi, akhlagh, english, maaref));
 	}
 
-	@Test(expected = EnrollmentRulesViolationException.class)
-	public void cannotTake18WithGPA15() throws EnrollmentRulesViolationException {
+	@Test
+	public void cannotTake18WithGPA15() {
 		bebe.addTranscriptRecord(phys1, new Term("t1"), 15);
 		bebe.addTranscriptRecord(prog, new Term("t1"), 15);
 		bebe.addTranscriptRecord(math1, new Term("t1"), 15);
 
-		new EnrollCtrl().enroll(bebe, requestedOfferings(ap, dm, math2, farsi, akhlagh, english, ap));
-		assertTrue(hasTaken(bebe, ap, dm, math2, farsi, akhlagh, english, ap));
+		EnrollCtrl enrollCtrl = new EnrollCtrl();
+		enrollCtrl.enroll(bebe, requestedOfferings(ap, dm, math2, farsi, akhlagh, english, ap));
+
+		assertFalse(hasTaken(bebe, ap, dm, math2, farsi, akhlagh, english, ap));
+
+		assertTrue(hasGPALimitError(enrollCtrl.getErrors()));
+		assertTrue(hasTakenTwiceError(enrollCtrl.getErrors()));
+
+		assertFalse(passedPrerequisitesError(enrollCtrl.getErrors()));
+		assertFalse(hasExamTimesError(enrollCtrl.getErrors()));
+		assertFalse(alreadyPassedError(enrollCtrl.getErrors()));
 	}
 
 	@Test
-	public void canTake20WithGPA16() throws EnrollmentRulesViolationException {
+	public void canTake20WithGPA16() {
 		bebe.addTranscriptRecord(phys1, new Term("t1"), 16);
 		bebe.addTranscriptRecord(prog, new Term("t1"), 16);
 		bebe.addTranscriptRecord(math1, new Term("t1"), 16);
@@ -206,16 +298,21 @@ public class EnrollCtrlTest {
 		assertTrue(hasTaken(bebe, ap, dm, math2, phys2, economy, karafarini, farsi));
 	}
 
-	@Test(expected = EnrollmentRulesViolationException.class)
-	public void cannotTake24() throws EnrollmentRulesViolationException {
+	@Test
+	public void cannotTake24() {
 		bebe.addTranscriptRecord(phys1, new Term("t1"), 16);
 		bebe.addTranscriptRecord(prog, new Term("t1"), 16);
 		bebe.addTranscriptRecord(math1, new Term("t1"), 16);
+		EnrollCtrl enrollCtrl = new EnrollCtrl();
+		enrollCtrl.enroll(bebe, requestedOfferings(ap, dm, math2, phys2, economy, karafarini, farsi, akhlagh, english));
 
-		new EnrollCtrl().enroll(bebe, requestedOfferings(
-				ap, dm, math2, phys2, economy, karafarini, farsi, akhlagh, english));
-		assertTrue(hasTaken(bebe, ap, dm, math2, phys2, economy, karafarini, farsi, akhlagh, english));
+		assertFalse(hasTaken(bebe, ap, dm, math2, phys2, economy, karafarini, farsi, akhlagh, english));
+
+		assertTrue(hasGPALimitError(enrollCtrl.getErrors()));
+
+		assertFalse(hasTakenTwiceError(enrollCtrl.getErrors()));
+		assertFalse(passedPrerequisitesError(enrollCtrl.getErrors()));
+		assertFalse(hasExamTimesError(enrollCtrl.getErrors()));
+		assertFalse(alreadyPassedError(enrollCtrl.getErrors()));
 	}
-
-
 }
